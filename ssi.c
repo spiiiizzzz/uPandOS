@@ -1,11 +1,5 @@
-struct ssi_request_and_payload {
-    int service;
-    void* arg
-};
-
-
 void SSIRequest(pcb_t* sender, int service, void* arg) {
-    struct ssi_request_and_payload* args = {
+    struct ssi_payload_t* args = {
         service,
         arg
     } ;
