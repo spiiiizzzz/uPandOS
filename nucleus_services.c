@@ -19,23 +19,44 @@ void terminateProcess(pcb_t* sender, pcb_t* arg){
     if (arg == NULL) to_terminate = sender;
     else to_terminate = arg;
 
-    while(!emptyChild(arg)){
-        terminateProcess(sender, container_of(arg->p_child, pcb_t, p_sib))
+    while(!emptyChild(to_terminate)){
+        terminateProcess(sender, container_of(to_terminate->p_child, pcb_t, p_sib))
     }
     
-    // TODO: cleanup stuff explained in section 11
+    if (removeProcQ(blocked_pseudo_clock, to_terminate) != NULL){
+        soft_blocked_count--;
+    } else {
+        for (int i = 0; i < SEMDEVLEN - 1; i++){
+            if (removeProcQ(blocked_dev[i], to_terminate) != NULL){
+                soft_blocked_count--;
+                break;
+            }
+        }
+    }
     outChild(tmp);
     freePcb(tmp);
 }
 
 
 void doIO(pcb_t* sender, ssi_do_io_t* do_io){
+    // in theory that's how you get device and interrupt line, there's probably a cleaner way, but maybe I'm just stupid
+    // and can't figure it out
+    int devNo = (*(do_io->commandAddr) - 0x4 - 0x10000054 & 0x70) >> 4;
+    int IntlineNo = (*(do_io->commandAddr) - 0x4 - 0x10000054 & 0x380) >> 7;
+    int snum = IntlineNo*8 + devNo;
+    // this piece might be wrong
+    if (commandAddr & PRINTCHR) {
+        snum += 8;
+    }
 
-    *(do_io->commandAddr) = do_io->commandValue;
-
-}
-
-void doIOResponse(){
+    if (emptyProcQ(blocked_dev[snum])){
+        insertProcQ(blocked_dev[snum], sender);
+        soft_blocked_count++;
+        *(do_io->commandAddr) = do_io->commandValue;
+    } else {
+        insertProcQ(blocked_dev[snum], sender);
+        soft_blocked_count++;
+    }
 }
 
 void waitForClock(pcb_t* sender){
