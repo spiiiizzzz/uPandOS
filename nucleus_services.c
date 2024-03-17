@@ -47,7 +47,7 @@ void doIO(pcb_t* sender, ssi_do_io_t* do_io){
     int snum = IntlineNo*8 + devNo;
     // this piece might be wrong
     if (do_io->commandValue & PRINTCHR) {
-        snum += 1;
+        snum += 8;
     }
 
     if (emptyProcQ(blocked_dev[snum])){
@@ -61,12 +61,12 @@ void doIO(pcb_t* sender, ssi_do_io_t* do_io){
 }
 
 void doIOHandleResponse(memaddr address){
-    int devNo = (do_io->commandAddr - START_DEVREG) / 0x280;
-    int IntlineNo = (do_io->commandAddr - START_DEVREG) / 0x80;
+    int devNo = (address - START_DEVREG) / 0x280;
+    int IntlineNo = (address - START_DEVREG) / 0x80;
     int snum = IntlineNo*8 + devNo;
     // this piece might be wrong
-    if (do_io->commandValue & PRINTCHR) {
-        snum += 1;
+    if (address - IntlineNo*0x80 - devNo*0x10 - START_DEVREG == 0x8) {
+        snum += 8;
     }
 
     pcb_t* waiting_process = removeProcQ(blocked_dev[snum]);
