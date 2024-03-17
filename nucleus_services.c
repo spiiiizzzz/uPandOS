@@ -41,12 +41,13 @@ void terminateProcess(pcb_t* sender, pcb_t* arg){
 void doIO(pcb_t* sender, ssi_do_io_t* do_io){
     // in theory that's how you get device and interrupt line, there's probably a cleaner way, but maybe I'm just stupid
     // and can't figure it out
-    int devNo = (*(do_io->commandAddr) - 0x4 - 0x10000054 & 0x70) >> 4;
-    int IntlineNo = (*(do_io->commandAddr) - 0x4 - 0x10000054 & 0x380) >> 7;
+
+    int devNo = (do_io->commandAddr - START_DEVREG) / 0x280;
+    int IntlineNo = (do_io->commandAddr - START_DEVREG) / 0x80;
     int snum = IntlineNo*8 + devNo;
     // this piece might be wrong
-    if (commandAddr & PRINTCHR) {
-        snum += 8;
+    if (do_io->commandValue & PRINTCHR) {
+        snum += 1;
     }
 
     if (emptyProcQ(blocked_dev[snum])){
@@ -57,6 +58,26 @@ void doIO(pcb_t* sender, ssi_do_io_t* do_io){
         insertProcQ(blocked_dev[snum], sender);
         soft_blocked_count++;
     }
+}
+
+void doIOHandleResponse(memaddr address){
+    int devNo = (do_io->commandAddr - START_DEVREG) / 0x280;
+    int IntlineNo = (do_io->commandAddr - START_DEVREG) / 0x80;
+    int snum = IntlineNo*8 + devNo;
+    // this piece might be wrong
+    if (do_io->commandValue & PRINTCHR) {
+        snum += 1;
+    }
+
+    pcb_t* waiting_process = removeProcQ(blocked_dev[snum]);
+    if (waiting_process != NULL){
+        soft_blocked_count--;
+        insertProcQ(ready_queue, waiting_process);
+        msg_t* m = allocMsg();
+        m -> m_payload = *address;
+        m -> m_sender = ssi_process;
+        SYSCALL(SENDMESSAGE, (unsigned int)waiting_process, (unsigned int)m, 0);   
+    } // else just assume the process was deleted before IO completion
 }
 
 void waitForClock(pcb_t* sender){
