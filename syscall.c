@@ -18,7 +18,7 @@ int SendMessage(pcb_t *dest, unsigned int payload){
     //processo in attesa
     else if (ListIsIn(dest, blocked_msg)){ // O qualcos'altro per indentificare un processo in attesa
         pushMessage(dest->msg_inbox, to_send);
-        if (dest->p_s.s_a1 == current_process) {
+        if (dest->p_s.s_a1 == current_process || dest->p_s.s_a1 == ANYMESSAGE) {
             outProcQ(blocked_msg, dest);
             insertProcQ(ready_queue, dest);
             soft_blocked_count--;
