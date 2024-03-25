@@ -12,6 +12,7 @@ pcb_t* current_process;
 pcb_t* ssi_process;
 struct list_head blocked_dev[SEMDEVLEN - 1];
 struct list_head blocked_pseudo_clock;
+struct list_head blocked_msg;
 
 extern void test();
 
@@ -40,9 +41,6 @@ int main(){
     LDIT(PSECOND);
 
     ssi_process = allocPcb();
-    if (ssi_process == NULL) { // should never happen ideally but who knows
-        return 1;
-    }
     // TODO: finish initialization
     ssi_process.p_parent = NULL;
     INIT_LIST_HEAD(ssi_process.p_sib);
@@ -54,9 +52,6 @@ int main(){
     insertProcQ(ready_queue.p_list, ssi_process);
 
     pcb_t* second = allocPcb();
-    if (second == NULL) { // should never happen ideally but who knows
-        return 1;
-    }
     // TODO: finish initialization
     second.p_parent = NULL;
     INIT_LIST_HEAD(second.p_sib);
