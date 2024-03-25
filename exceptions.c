@@ -3,7 +3,7 @@
 
 //general handler
 void GeneralExceptionHandler(){
-    memaddr Cause = ((state_t*) BIOSDATAPAGE)->cause; 
+    memaddr Cause = ((state_t*) BIOSDATAPAGE)->s_cause; 
     int exCode = ((Cause << 25) >> 27); 
 
     if(exCode == 0) InterruptExceptionHandler();
@@ -18,16 +18,16 @@ void GeneralExceptionHandler(){
 static void PassUp_Or_Die(int index){
     if(currentProcess->p_supportStruct == NULL){
         TerminateProcess(NULL);
-        //nel caso di processi che stavano aspettando e quindi si trovavano nella lista blocked bisogna rimuovere anche i possibili semafori (?) e modificare i relativi PC e soft-blocked variables
+        
     }
     else{
        state_t *exceptState = (state_t*) BIOSDATAPAGE;
         
         currentProcess->p_supportStruct->sup_exceptState[index] = *exceptState;
 
-        LDCXT(currentProcess->p_supportStruct->sup_exceptContext[index].stackPtr,
-                currentProcess->p_supportStruct->sup_exceptContext[index].status,
-                currentProcess->p_supportStruct->sup_exceptContext[index].pc);
+        LDCXT(currentProcess->p_supportStruct->sup_exceptContext[index].c_stackPtr,
+                currentProcess->p_supportStruct->sup_exceptContext[index].c_status,
+                currentProcess->p_supportStruct->sup_exceptContext[index].c_pc);
     }
 }
 
@@ -38,7 +38,7 @@ static void PassUp_Or_Die(int index){
 void SYSCALLExceptionHandler(){
     state_t *exceptState = (state_t*) BIOSDATAPAGE;
 
-    int a0 = exceptState->reg_a0;
+    int a0 = exceptState->s_reg[3];  //si può vedere se funziona anche s_a0
         
     if(a0 >= 1) PassUp_Or_Die(GENERALEXCEPT);
 }
