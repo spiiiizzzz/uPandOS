@@ -1,56 +1,42 @@
-void SSIRequest(pcb_t* sender, int service, void* arg) {
-    struct ssi_payload_t* args = {
-        service,
-        arg
-    } ;
-    msg_t* payload = allocMsg();
-    payload->m_sender = sender;
-    payload->m_payload = args;
-    SYSCALL(SENDMESSAGE, (unsigned int)ssi_process, (unsigned int)payload, 0);
-}
-
-
 void SSIServer() {
     while (TRUE) {
 
-        msg_t* payload;
-        SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, (unsigned int)payload, 0);
+        void* payload;
+        pcb_t* sender = SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, (unsigned int)payload, 0);
         
 
             
         // Gestione della richiesta
-        int service = (payload->m_payload).service;
-        void* args = (payload->m_payload).args;
-        void* response;
+        int service = (ssi_payload_t*)->service;
+        void* args = (ssi_payload_t*)->args;
+        void* response = NULL;
         switch(service){
             case CREATEPROCESS:
-                response = (void*)createProcess(payload->m_sender, (ssi_create_process_t*)args);
+                response = (void*)createProcess(sender, (ssi_create_process_t*)args);
                 break;
             case TERMINATEPROCESS:
-                terminateProcess(payload->m_sender, (pcb_t*)args);
+                terminateProcess(sender, (pcb_t*)args);
                 break;
             case DOIO:
+                doIO(sender, (ssi_do_io_t*)args);
                 break;
             case GETTIME:
-                response = (void*)getCPUTime(payload -> m_sender);
+                response = (void*)getCPUTime(sender);
                 break;
             case CLOCKWAIT:
-                waitForClock(payload -> m_sender);
+                waitForClock(sender);
                 break;
             case GETSUPPORTPTR:
-                response = (void*)getSupportData(payload->m_sender);
+                response = (void*)getSupportData(sender);
                 break;
             case GETPROCESSID:
-                response = (void*)getProcessID(payload -> m_sender, args);
+                response = (void*)getProcessID(sender, args);
         }
         freeMsg(payload);
         
 
         // Invio dei risultati
-        msg_t* payload = allocMsg();
-        payload->m_sender = ssi_process;
-        payload->m_payload = response;
-        SYSCALL(SENDMESSAGE, (unsigned int)payload->m_sender, (unsigned int)payload, 0);
+        SYSCALL(SENDMESSAGE, (unsigned int)payload->m_sender, (unsigned int)response, 0);
 
 
     }
