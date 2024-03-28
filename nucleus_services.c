@@ -10,7 +10,7 @@ pcb_t* createProcess(pcb_t* sender, ssi_create_process_t* args){
 
     process_count++;
 
-    return to_allocate
+    return to_allocate;
 }
 
 
@@ -73,11 +73,13 @@ void doIOHandleResponse(memaddr address){
     if (waiting_process != NULL){
         soft_blocked_count--;
         insertProcQ(ready_queue, waiting_process);
-        msg_t* m = allocMsg();
-        m -> m_payload = *address;
-        m -> m_sender = ssi_process;
-        SYSCALL(SENDMESSAGE, (unsigned int)waiting_process, (unsigned int)m, 0);   
+        SYSCALL(SENDMESSAGE, (unsigned int)waiting_process, (unsigned int)*address, 0);   
     } // else just assume the process was deleted before IO completion
+    
+    /*
+    if (!emptyProcQ(blocked_dev[snum])){
+        doIO(headProcQ(blocked_dev[snum]), ...); // apparently you need to also store the ssi_do_io struct
+    }*/
 }
 
 void waitForClock(pcb_t* sender){
