@@ -1,4 +1,4 @@
-Cristian Orsi 0001049591
-Ahmed Niouer 0001027288
-Salvatore Pizzolanti 0001070347
-Pietro Giovannini 0000826013
+Cristian Orsi
+Salvatore Pizzolanti
+Pietro Giovannini
+Ahmed Niouer
